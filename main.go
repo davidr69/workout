@@ -1,0 +1,35 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"net/http"
+	"time"
+
+	"workout.lavacro.net/api"
+)
+
+type config struct {
+	port int
+}
+
+func main() {
+	fmt.Println("Hello, World!")
+
+	var cfg config
+	flag.IntVar(&cfg.port, "port", 8080, "port to listen on")
+	flag.Parse()
+
+	mux := api.Routes()
+
+	server := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.port),
+		Handler:      mux,
+		IdleTimeout:  10 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	err := server.ListenAndServe()
+	fmt.Println(err)
+}
