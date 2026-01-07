@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -39,11 +38,6 @@ func exercises(w http.ResponseWriter, r *http.Request) {
 	js, jsErr := json.Marshal(resp)
 	if jsErr != nil {
 		log.Fatal("Problem encoding data ...", js)
-	}
-
-	_, respErr := fmt.Fprintln(w, js)
-	if respErr != nil {
-		log.Fatal("Problem writing response ...", respErr)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

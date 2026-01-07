@@ -31,7 +31,6 @@ SELECT progid, exercise, muscle, mydate, weight, rep1, rep2
 FROM app.allprogress
 WHERE progid IS NOT NULL
 ORDER BY muscle, exercise, mydate
-LIMIT 5
 	`)
 	if sqlErr != nil {
 		log.Fatal("Problem executing query ...", sqlErr)
