@@ -14,7 +14,7 @@ var db *sql.DB
 
 func Init() {
 	pw := os.Getenv("PGPASSWORD")
-	conn := fmt.Sprintf("postgres://david:%s@dev-db:5432/workout?sslmode=disable", pw)
+	conn := fmt.Sprintf("postgres://david:%s@localhost:5432/workout?sslmode=disable", pw)
 
 	var err error
 	db, err = sql.Open("postgres", conn)
@@ -61,13 +61,16 @@ ORDER BY muscle, exercise, mydate
 		}
 
 		if weight.Valid {
-			p.Weight = float32(weight.Float64)
+			w := float32(weight.Float64)
+			p.Weight = &w
 		}
 		if rep1.Valid {
-			p.Rep1 = int(rep1.Int16)
+			r := int(rep1.Int16)
+			p.Rep1 = &r
 		}
 		if rep2.Valid {
-			p.Rep2 = int(rep2.Int16)
+			r := int(rep2.Int16)
+			p.Rep2 = &r
 		}
 
 		allProg = append(allProg, p)
