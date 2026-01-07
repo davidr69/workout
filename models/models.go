@@ -1,5 +1,7 @@
 package models
 
+type Envelope map[string]any
+
 type AllProgress struct {
 	ProgressId int     `json:"progress_id"`
 	ExerciseId int     `json:"exercise_id"`
