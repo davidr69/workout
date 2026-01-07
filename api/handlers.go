@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"log"
 	"net/http"
 
@@ -9,7 +11,7 @@ import (
 	"workout.lavacro.net/models"
 )
 
-func writeResponse(w http.ResponseWriter, r *http.Request, data models.Envelope) {
+func writeResponse(w http.ResponseWriter, data models.Envelope) {
 	js, jsErr := json.Marshal(data)
 	if jsErr != nil {
 		http.Error(w, jsErr.Error(), http.StatusInternalServerError)
@@ -25,8 +27,23 @@ func writeResponse(w http.ResponseWriter, r *http.Request, data models.Envelope)
 	}
 }
 
+func readBody(r *http.Request, obj any) (any, error) {
+	dec := json.NewDecoder(r.Body)
+
+	if err := dec.Decode(obj); err != nil {
+		return nil, err
+	}
+
+	err := dec.Decode(&struct{}{})
+	if err != io.EOF {
+		return nil, errors.New("trailing garbage after JSON object")
+	}
+
+	return dec, nil
+}
+
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	writeResponse(w, r, models.Envelope{"status": "ok"})
+	writeResponse(w, models.Envelope{"status": "ok"})
 }
 
 func exercises(w http.ResponseWriter, r *http.Request) {
@@ -37,5 +54,5 @@ func exercises(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("Problem getting data from database ...", dberr)
 	}
 
-	writeResponse(w, r, models.Envelope{"progress": resp})
+	writeResponse(w, models.Envelope{"progress": resp})
 }
