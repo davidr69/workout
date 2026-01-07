@@ -3,7 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+
+	"workout.lavacro.net/database"
+	"workout.lavacro.net/models"
 )
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
@@ -25,8 +29,27 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func exercises(w http.ResponseWriter, r *http.Request) {
-	_, err := fmt.Fprintf(w, "Exercises ...!")
+	var resp []models.AllProgress
+	resp, dberr := database.AllProgress()
+
+	if dberr != nil {
+		log.Fatal("Problem getting data from database ...", dberr)
+	}
+
+	js, jsErr := json.Marshal(resp)
+	if jsErr != nil {
+		log.Fatal("Problem encoding data ...", js)
+	}
+
+	_, respErr := fmt.Fprintln(w, js)
+	if respErr != nil {
+		log.Fatal("Problem writing response ...", respErr)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, err := w.Write(js)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal("Problem writing response ...", err)
 	}
 }

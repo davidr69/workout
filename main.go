@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"workout.lavacro.net/api"
+	"workout.lavacro.net/database"
 )
 
 type config struct {
@@ -15,6 +16,8 @@ type config struct {
 
 func main() {
 	fmt.Println("Hello, World!")
+
+	database.Init()
 
 	var cfg config
 	flag.IntVar(&cfg.port, "port", 8080, "port to listen on")
