@@ -45,16 +45,29 @@ ORDER BY muscle, exercise, mydate
 
 	for rows.Next() {
 		var p models.AllProgress
+		var weight sql.NullFloat64
+		var rep1 sql.NullInt16
+		var rep2 sql.NullInt16
 
 		if err := rows.Scan(
 			&p.ProgressId,
 			&p.Exercise,
 			&p.Muscle,
 			&p.Mydate,
-			&p.Weight,
-			&p.Rep1,
-			&p.Rep2); err != nil {
+			&weight,
+			&rep1,
+			&rep2); err != nil {
 			log.Fatal("Problem scanning row ...", err)
+		}
+
+		if weight.Valid {
+			p.Weight = float32(weight.Float64)
+		}
+		if rep1.Valid {
+			p.Rep1 = int(rep1.Int16)
+		}
+		if rep2.Valid {
+			p.Rep2 = int(rep2.Int16)
 		}
 
 		allProg = append(allProg, p)
