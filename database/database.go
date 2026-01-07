@@ -14,7 +14,7 @@ var db *sql.DB
 
 func Init() {
 	pw := os.Getenv("PGPASSWORD")
-	conn := fmt.Sprintf("postgres://david:%s@localhost:5432/workout?sslmode=disable", pw)
+	conn := fmt.Sprintf("postgres://david:%s@dev-db:5432/workout?sslmode=disable", pw)
 
 	var err error
 	db, err = sql.Open("postgres", conn)
