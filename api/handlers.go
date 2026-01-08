@@ -105,3 +105,27 @@ func progress(w http.ResponseWriter, r *http.Request) {
 
 	writeResponse(w, models.Envelope{"progress": resp})
 }
+
+func activity(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+
+	if id == "" {
+		http.Error(w, "id is required", http.StatusBadRequest)
+		return
+	}
+
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "id parameter must be an integer", http.StatusBadRequest)
+		return
+	}
+
+	var resp models.Progress
+	resp, dberr := database.Activity(idInt)
+
+	if dberr != nil {
+		log.Fatal("Problem getting data from database ...", dberr)
+	}
+
+	writeResponse(w, models.Envelope{"activity": resp})
+}

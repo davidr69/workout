@@ -229,3 +229,60 @@ func Progress(year int, month int) ([]models.Progress, error) {
 
 	return resp, nil
 }
+
+func Activity(id int) (models.Progress, error) {
+	var prog models.Progress
+
+	query := `
+		SELECT progid, allprogress.exerciseid, exercise, muscle, mydate, weight, rep1, rep2
+		FROM app.allprogress
+		WHERE progid = $1
+	`
+
+	rows, sqlErr := db.Query(query, id)
+	if sqlErr != nil {
+		log.Fatal("Problem executing query ...", sqlErr)
+	}
+
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal("Problem closing 'rows' resource")
+		}
+	}()
+
+	if !rows.Next() {
+		log.Fatal("No rows returned")
+	}
+
+	var weight sql.NullFloat64
+	var rep1 sql.NullInt16
+	var rep2 sql.NullInt16
+
+	if err := rows.Scan(
+		&prog.ProgressId,
+		&prog.ExerciseId,
+		&prog.Exercise,
+		&prog.Muscle,
+		&prog.Mydate,
+		&weight,
+		&rep1,
+		&rep2); err != nil {
+		log.Fatal("Problem scanning row ...", err)
+	}
+
+	if weight.Valid {
+		w := float32(weight.Float64)
+		prog.Weight = &w
+	}
+	if rep1.Valid {
+		r := int(rep1.Int16)
+		prog.Rep1 = &r
+	}
+	if rep2.Valid {
+		r := int(rep2.Int16)
+		prog.Rep2 = &r
+	}
+
+	return prog, nil
+}

@@ -11,6 +11,7 @@ func Routes() *http.ServeMux {
 	mux.HandleFunc("GET /api/v1/exercises", exercises)
 	mux.HandleFunc("GET /api/v1/months", months)
 	mux.HandleFunc("GET /api/v1/progress", progress)
+	mux.HandleFunc("GET /api/v1/activity", activity)
 	/*
 		mux.HandleFunc("GET /api/v1/stats/{when}", nil)
 		mux.HandleFunc("POST /api/v1/activity", nil)

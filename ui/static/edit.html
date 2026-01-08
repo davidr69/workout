@@ -18,7 +18,7 @@
 
   		function confirm_del() {
             if(confirm("Do you really want to remove this")) {
-                fetch(`activity?id=${id}`, {
+                fetch(`api/v1/activity?id=${id}`, {
                     method: 'DELETE',
                     headers: headers
                 }).then(response => {
@@ -45,7 +45,7 @@
 				rep2: rep2 === '' ? null : Number(rep2)
 			};
 
-			fetch('activity', {
+			fetch('api/v1/activity', {
 				method: 'PUT',
 				body: JSON.stringify(body),
 				headers: headers
@@ -71,8 +71,9 @@
 		}
 
   		try {
-            const resp = await fetch(`activity?id=${id}`);
-            const data = await resp.json();
+            const resp = await fetch(`api/v1/activity?id=${id}`);
+            const raw = await resp.json();
+            const data = raw['activity'];
             draw('muscle', data['muscle']);
             draw('exercise', data['exercise']);
             draw('weight', data['weight'], true);
