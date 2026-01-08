@@ -2,11 +2,12 @@ package models
 
 type Envelope map[string]any
 
-type AllProgress struct {
+type Progress struct {
 	ProgressId *int     `json:"progress_id"`
 	ExerciseId *int     `json:"exercise_id"`
 	Exercise   *string  `json:"exercise"`
 	Muscle     *string  `json:"muscle"`
+	MuscleId   *int     `json:"muscle_id"`
 	Mydate     *string  `json:"mydate"`
 	Weight     *float32 `json:"weight"`
 	Rep1       *int     `json:"rep1"`

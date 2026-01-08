@@ -4,7 +4,7 @@ export default class Render {
 	monthList;
 
 	init(monthList) {
-		this.monthList = monthList;
+		this.monthList = monthList['dates'];
 	}
 
 	getMonths() {

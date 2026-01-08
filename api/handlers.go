@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"workout.lavacro.net/database"
 	"workout.lavacro.net/models"
@@ -46,8 +47,8 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, models.Envelope{"status": "ok"})
 }
 
-func progress(w http.ResponseWriter, r *http.Request) {
-	var resp []models.AllProgress
+func allProgress(w http.ResponseWriter, r *http.Request) {
+	var resp []models.Progress
 	resp, dberr := database.AllProgress()
 
 	if dberr != nil {
@@ -66,4 +67,41 @@ func exercises(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse(w, models.Envelope{"exercises": resp})
+}
+
+func months(w http.ResponseWriter, r *http.Request) {
+	resp, dberr := database.YearMonths()
+	if dberr != nil {
+		log.Fatal("Problem getting data from database ...", dberr)
+	}
+	writeResponse(w, models.Envelope{"dates": resp})
+}
+
+func progress(w http.ResponseWriter, r *http.Request) {
+	year := r.URL.Query().Get("year")
+	month := r.URL.Query().Get("month")
+
+	if year == "" || month == "" {
+		http.Error(w, "year and month parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	yearInt, err := strconv.Atoi(year)
+	if err != nil {
+		http.Error(w, "year parameter must be an integer", http.StatusBadRequest)
+		return
+	}
+
+	monthInt, err := strconv.Atoi(month)
+	if err != nil {
+		http.Error(w, "month parameter must be an integer", http.StatusBadRequest)
+		return
+	}
+
+	resp, dberr := database.Progress(yearInt, monthInt)
+	if dberr != nil {
+		log.Fatal("Problem getting data from database ...", dberr)
+	}
+
+	writeResponse(w, models.Envelope{"progress": resp})
 }

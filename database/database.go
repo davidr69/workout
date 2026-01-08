@@ -23,8 +23,8 @@ func Init() {
 	}
 }
 
-func AllProgress() ([]models.AllProgress, error) {
-	var allProg []models.AllProgress
+func AllProgress() ([]models.Progress, error) {
+	var allProg []models.Progress
 
 	query := `
 		SELECT progid, allprogress.exerciseid, exercise, muscle, mydate, weight, rep1, rep2
@@ -46,7 +46,7 @@ func AllProgress() ([]models.AllProgress, error) {
 	}()
 
 	for rows.Next() {
-		var p models.AllProgress
+		var p models.Progress
 		var weight sql.NullFloat64
 		var rep1 sql.NullInt16
 		var rep2 sql.NullInt16
@@ -129,4 +129,103 @@ func Exercises() ([]models.Exercises, error) {
 	exercises = append(exercises, exercise)
 
 	return exercises, nil
+}
+
+func YearMonths() ([]string, error) {
+	var months []string
+
+	query := `
+		WITH x AS (
+			SELECT DISTINCT mydate
+			FROM app.progress
+		)
+		SELECT CAST(date_part('year', mydate) AS varchar) || LPAD(CAST(date_part('month', mydate) AS varchar), 2, '0') AS yrmon
+		FROM x
+		ORDER BY mydate
+	`
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Fatal("Problem executing query ...", err)
+	}
+
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal("Problem closing 'rows' resource")
+		}
+	}()
+
+	for rows.Next() {
+		var yrmon string
+		if err := rows.Scan(&yrmon); err != nil {
+			log.Fatal("Problem scanning row ...", err)
+		}
+		months = append(months, yrmon)
+	}
+
+	return months, nil
+}
+
+func Progress(year int, month int) ([]models.Progress, error) {
+	var resp []models.Progress
+
+	query := `
+		SELECT e.id, m.description AS muscle, m.id AS muscle_id, e.description AS exercise, p.weight, p.rep1, p.rep2,
+				p.id AS progress_id
+		FROM app.exercise e
+		JOIN app.muscle m ON e.muscle = m.id
+		LEFT JOIN app.progress p ON e.id = p.exercise
+		    AND DATE_PART('year', mydate) = ?
+		    AND DATE_PART('month', mydate) = ?
+		ORDER BY muscle, exercise
+	`
+
+	rows, sqlErr := db.Query(query, year, month)
+	if sqlErr != nil {
+		log.Fatal("Problem executing query ...", sqlErr)
+	}
+
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal("Problem closing 'rows' resource")
+		}
+	}()
+
+	for rows.Next() {
+		var p models.Progress
+		var weight sql.NullFloat64
+		var rep1 sql.NullInt16
+		var rep2 sql.NullInt16
+
+		if err := rows.Scan(
+			&p.ExerciseId,
+			&p.Muscle,
+			&p.MuscleId,
+			&p.Exercise,
+			&weight,
+			&rep1,
+			&rep2,
+			&p.ProgressId,
+		); err != nil {
+			log.Fatal("Problem scanning row ...", err)
+		}
+
+		if weight.Valid {
+			w := float32(weight.Float64)
+			p.Weight = &w
+		}
+		if rep1.Valid {
+			r := int(rep1.Int16)
+			p.Rep1 = &r
+		}
+		if rep2.Valid {
+			r := int(rep2.Int16)
+			p.Rep2 = &r
+		}
+
+		resp = append(resp, p)
+	}
+
+	return resp, nil
 }

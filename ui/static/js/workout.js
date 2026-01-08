@@ -51,7 +51,7 @@ export default class Workout {
 	}
 
 	#getMonths = () => {
- 		fetch('months').then(response => {
+ 		fetch('api/v1/months').then(response => {
 			response.json().then(data => {
 				this.render.init(data);
 				this.#drawHeaders();
@@ -62,7 +62,7 @@ export default class Workout {
 	#getHeader = (when, cb) => {
 		const year = when.substring(0,4);
 		const month = when.substring(4);
-		fetch(`progress?year=${year}&month=${month}`).then(response => {
+		fetch(`api/v1/progress?year=${year}&month=${month}`).then(response => {
 			response.json().then(data => {
 				this.allData[when] = data;
 				if(--this.count === 0) {
