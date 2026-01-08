@@ -64,7 +64,7 @@ export default class Workout {
 		const month = when.substring(4);
 		fetch(`api/v1/progress?year=${year}&month=${month}`).then(response => {
 			response.json().then(data => {
-				this.allData[when] = data;
+				this.allData[when] = data['progress'];
 				if(--this.count === 0) {
 					cb();
 				}
@@ -116,7 +116,7 @@ export default class Workout {
 				// draw the left side muscle/category list
 				this.render.drawMusclesAndExercises(data);
 				this.#getMonths();
-				this.exercises = data;
+				this.exercises = data['exercises'];
 				this.#populateMuscles()
 			});
 		});
@@ -125,7 +125,7 @@ export default class Workout {
 	#populateMuscles = () => {
 		let dd = document.getElementById('choose_muscle');
 		dd.length = 0;
-		let muscles = this.exercises.map(item => item.description).sort();
+		let muscles = this.exercises.map(item => item.muscle).sort();
 		for(let muscle of muscles) {
 			let option = new Option(muscle, muscle);
 			dd.add(option);
@@ -137,8 +137,8 @@ export default class Workout {
 		let dd = document.getElementById('choose_exercise');
 		dd.length = 0;
 		let muscle = document.getElementById('choose_muscle').value;
-		let exercises = this.exercises.find(item => item.description === muscle).exercises;
-		let data = exercises.map(item => [item['id'], item['exerciseName']] );
+		let exercises = this.exercises.find(item => item.muscle === muscle).exercises;
+		let data = exercises.map(item => [item['id'], item['exercise_name']] );
 		for (let datum of data) {
 			let option = new Option(datum[1], datum[0]);
 			dd.add(option);

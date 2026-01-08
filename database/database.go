@@ -175,8 +175,8 @@ func Progress(year int, month int) ([]models.Progress, error) {
 		FROM app.exercise e
 		JOIN app.muscle m ON e.muscle = m.id
 		LEFT JOIN app.progress p ON e.id = p.exercise
-		    AND DATE_PART('year', mydate) = ?
-		    AND DATE_PART('month', mydate) = ?
+		    AND DATE_PART('year', mydate) = $1
+		    AND DATE_PART('month', mydate) = $2
 		ORDER BY muscle, exercise
 	`
 
