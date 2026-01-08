@@ -25,6 +25,9 @@ func main() {
 
 	mux := api.Routes()
 
+	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	mux.Handle("/", http.StripPrefix("", fileServer))
+
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
 		Handler:      mux,

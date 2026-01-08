@@ -12,3 +12,14 @@ type AllProgress struct {
 	Rep1       *int     `json:"rep1"`
 	Rep2       *int     `json:"rep2"`
 }
+
+type Exercises struct {
+	Muscle    string     `json:"muscle"`
+	Exercises []Exercise `json:"exercises"`
+}
+
+type Exercise struct {
+	Id           *int    `json:"id"`
+	Muscle       *string `json:"muscle"`
+	ExerciseName *string `json:"exercise_name"`
+}

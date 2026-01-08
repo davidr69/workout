@@ -46,7 +46,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, models.Envelope{"status": "ok"})
 }
 
-func exercises(w http.ResponseWriter, r *http.Request) {
+func progress(w http.ResponseWriter, r *http.Request) {
 	var resp []models.AllProgress
 	resp, dberr := database.AllProgress()
 
@@ -55,4 +55,15 @@ func exercises(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse(w, models.Envelope{"progress": resp})
+}
+
+func exercises(w http.ResponseWriter, r *http.Request) {
+	var resp []models.Exercises
+	resp, dberr := database.Exercises()
+
+	if dberr != nil {
+		log.Fatal("Problem getting data from database ...", dberr)
+	}
+
+	writeResponse(w, models.Envelope{"exercises": resp})
 }

@@ -1,0 +1,54 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700,700i");
+
+td, body {
+	font-family:	'Open Sans', sans-serif;
+	font-size:		9pt;
+	padding:		2px;
+}
+
+body {
+	background-color: #ececec;
+}
+
+.muscle {
+	background:		#524745;
+	color:			#ffffff;
+	font-weight:	bold;
+}
+
+.exercise {
+	background:		#6d625d;
+	color:			#ffffff;
+	text-align:		left;
+}
+
+.data {
+	background:		#c2b7ac;
+	text-align:		right;
+}
+
+a {
+	text-decoration: none;
+	color:			#000000;
+}
+
+a:hover {
+	text-decoration: underline;
+	color: #8f7548;
+}
+
+table {
+	padding: 2px;
+	border: none;
+}
+
+th {
+	text-align:		center;
+	width:			65px;
+	background:		#6d625d;
+	color:			#ffffff;
+}
+
+.center {
+	text-align:		center;
+}

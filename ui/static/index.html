@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Workout editor</title>
+
+	<link type="text/css" rel="stylesheet" href="css/format.css">
+
+    <script type="module">
+        const workoutJS = './js/workout.js';
+        const { default: Workout } = await import(workoutJS);
+        globalThis.workout = new Workout();
+    </script>
+</head>
+<body>
+<table style="border-spacing: 1px; padding: 2px" id="table" about="table">
+	<thead id="tableHead">
+	<tr id="tableRecord">
+		<th style="width: auto; background-color: #ececec;" id="th">
+			<a href="javascript:globalThis.workout.rewind()">&laquo;&laquo;&laquo;</a>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<a href="javascript:globalThis.workout.forward()">&raquo;&raquo;&raquo;</a>
+		</th>
+	</tr>
+	</thead>
+	<tbody id="tableBody"></tbody>
+</table>
+
+<br/>
+
+<label>
+	<select id="choose_muscle" onChange="globalThis.workout.populateExercises()"></select>
+	&nbsp;&nbsp;&nbsp;
+	<select id="choose_exercise"></select>
+	<br/><br/>
+	<select id="choose_month"></select>
+	<input type="number" size="4" maxlength="4" id="choose_year" style="width: 75px"/>
+	<br/><br/>
+	Weight: <input type="number" size="5" maxlength="5" id="weight" style="width: 75px" autocomplete="off"/>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	Rep1: <input type="number" size="4" maxlength="2" id="rep1" style="width: 50px" autocomplete="off"/>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	Rep2: <input type="number" size="4" maxlength="2" id="rep2" style="width: 50px" autocomplete="off"/>
+	<br/><br/>
+	<input type="button" value=" add this " onClick="globalThis.workout.save();"/>
+</label>
+
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Edit/delete entry</title>
+
+	<link type="text/css" rel="stylesheet" href="css/format.css">
+
+	<script src="./js/common.js"></script>
+	<script type="module">
+		const params = globalThis.parseUrlParams ? globalThis.parseUrlParams() : {};
+		const id = params['id'];
+
+		const headers = {
+			'Content-Type': 'application/json',
+			'Accept': 'application/json'
+		};
+
+  		function confirm_del() {
+            if(confirm("Do you really want to remove this")) {
+                fetch(`activity?id=${id}`, {
+                    method: 'DELETE',
+                    headers: headers
+                }).then(response => {
+                    response.json().then(data => {
+                        console.log(data);
+                        opener.window.location.reload();
+                        window.close();
+                    })
+                }).catch(error => {
+                    console.log(error);
+                });
+            }
+        }
+
+		function do_it() {
+			const weight = document.getElementById('weight').value.trim();
+			const rep1 = document.getElementById('rep1').value.trim();
+			const rep2 = document.getElementById('rep2').value.trim();
+
+			const body =  {
+				id: id,
+				weight: weight === '' ? null : Number(weight),
+				rep1: rep1 === '' ? null : Number(rep1),
+				rep2: rep2 === '' ? null : Number(rep2)
+			};
+
+			fetch('activity', {
+				method: 'PUT',
+				body: JSON.stringify(body),
+				headers: headers
+			}).then(response => {
+				response.json().then(data => {
+					console.log(data);
+					opener.window.location.reload();
+					window.close();
+				})
+			}).catch(error => {
+				console.log(error);
+			});
+		}
+
+		const draw = (el, val, useValue = false) => {
+			if(val !== null) {
+				if(useValue) {
+					document.getElementById(el).value = val;
+				} else {
+					document.getElementById(el).innerHTML = val;
+				}
+			}
+		}
+
+  		try {
+            const resp = await fetch(`activity?id=${id}`);
+            const data = await resp.json();
+            draw('muscle', data['muscle']);
+            draw('exercise', data['exercise']);
+            draw('weight', data['weight'], true);
+            draw('rep1', data['rep1'], true);
+            draw('rep2', data['rep2'], true);
+            const mon = data['mydate'].substring(4);
+            const yr = data['mydate'].substring(0, 4);
+            draw('month', mon);
+            draw('year', yr);
+        } catch (e) {
+            console.log(e);
+        }
+
+		globalThis.confirm_del = confirm_del;
+		globalThis.do_it = do_it;
+ 	 </script>
+</head>
+<body>
+
+<strong>Muscle:</strong> <span id="muscle"></span><br/><br/>
+
+<strong>Exercise:</strong> <span id="exercise"></span><br/><br/>
+
+<strong>Date:</strong> <span id="month"></span>/<span id="year"></span><br/><br/>
+
+<label for="weight"><strong>Weight:</strong></label> <input type="number" size="6" maxlength="6" id="weight" name="weight" style="width: 75px"/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<label for="rep1"><strong>Rep1:</strong></label> <input type="number" size="4" maxlength="4" id="rep1" name="rep1" style="width: 50px"/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<label for="rep2"><strong>Rep2:</strong></label> <input type="number" size="4" maxlength="4" id="rep2" name="rep2" style="width: 50px"/>
+<br/><br/>
+<input type="button" value=" Make it so! " onClick="do_it()"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="button" value=" Delete this " onClick="confirm_del()"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="button" value=" Cancel " onClick="window.close()"/>
+
+</body>
+</html>
