@@ -17,13 +17,14 @@ type config struct {
 func main() {
 	fmt.Println("Hello, World!")
 
-	database.Init()
+	db := &database.Dao{}
+	db.Init()
 
 	var cfg config
 	flag.IntVar(&cfg.port, "port", 8080, "port to listen on")
 	flag.Parse()
 
-	mux := api.Routes()
+	mux := api.Routes(db)
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 	mux.Handle("/", http.StripPrefix("", fileServer))

@@ -10,20 +10,22 @@ import (
 	"workout.lavacro.net/models"
 )
 
-var db *sql.DB
+type Dao struct {
+	conn *sql.DB
+}
 
-func Init() {
+func (db *Dao) Init() {
 	pw := os.Getenv("PGPASSWORD")
-	conn := fmt.Sprintf("postgres://david:%s@dev-db:5432/workout?sslmode=disable", pw)
+	uri := fmt.Sprintf("postgres://david:%s@dev-db:5432/workout?sslmode=disable", pw)
 
 	var err error
-	db, err = sql.Open("postgres", conn)
+	db.conn, err = sql.Open("postgres", uri)
 	if err != nil {
 		log.Fatal("Error connecting to database: ", err)
 	}
 }
 
-func AllProgress() ([]models.Progress, error) {
+func (db *Dao) AllProgress() ([]models.Progress, error) {
 	var allProg []models.Progress
 
 	query := `
@@ -33,7 +35,7 @@ func AllProgress() ([]models.Progress, error) {
 		ORDER BY muscle, exercise, mydate
 	`
 
-	rows, sqlErr := db.Query(query)
+	rows, sqlErr := db.conn.Query(query)
 	if sqlErr != nil {
 		log.Fatal("Problem executing query ...", sqlErr)
 	}
@@ -47,34 +49,7 @@ func AllProgress() ([]models.Progress, error) {
 
 	for rows.Next() {
 		var p models.Progress
-		var weight sql.NullFloat64
-		var rep1 sql.NullInt16
-		var rep2 sql.NullInt16
-
-		if err := rows.Scan(
-			&p.ProgressId,
-			&p.ExerciseId,
-			&p.Exercise,
-			&p.Muscle,
-			&p.Mydate,
-			&weight,
-			&rep1,
-			&rep2); err != nil {
-			log.Fatal("Problem scanning row ...", err)
-		}
-
-		if weight.Valid {
-			w := float32(weight.Float64)
-			p.Weight = &w
-		}
-		if rep1.Valid {
-			r := int(rep1.Int16)
-			p.Rep1 = &r
-		}
-		if rep2.Valid {
-			r := int(rep2.Int16)
-			p.Rep2 = &r
-		}
+		p = getProgress(rows)
 
 		allProg = append(allProg, p)
 	}
@@ -82,7 +57,7 @@ func AllProgress() ([]models.Progress, error) {
 	return allProg, nil
 }
 
-func Exercises() ([]models.Exercises, error) {
+func (db *Dao) Exercises() ([]models.Exercises, error) {
 	var exercises []models.Exercises
 
 	query := `
@@ -91,7 +66,7 @@ func Exercises() ([]models.Exercises, error) {
 		JOIN app.muscle m ON e.muscle = m.id
 		ORDER BY m.description, exercise_name
 	`
-	rows, err := db.Query(query)
+	rows, err := db.conn.Query(query)
 	if err != nil {
 		log.Fatal("Problem executing query ...", err)
 	}
@@ -131,7 +106,7 @@ func Exercises() ([]models.Exercises, error) {
 	return exercises, nil
 }
 
-func YearMonths() ([]string, error) {
+func (db *Dao) YearMonths() ([]string, error) {
 	var months []string
 
 	query := `
@@ -143,7 +118,7 @@ func YearMonths() ([]string, error) {
 		FROM x
 		ORDER BY mydate
 	`
-	rows, err := db.Query(query)
+	rows, err := db.conn.Query(query)
 	if err != nil {
 		log.Fatal("Problem executing query ...", err)
 	}
@@ -166,7 +141,7 @@ func YearMonths() ([]string, error) {
 	return months, nil
 }
 
-func Progress(year int, month int) ([]models.Progress, error) {
+func (db *Dao) Progress(year int, month int) ([]models.Progress, error) {
 	var resp []models.Progress
 
 	query := `
@@ -180,7 +155,7 @@ func Progress(year int, month int) ([]models.Progress, error) {
 		ORDER BY muscle, exercise
 	`
 
-	rows, sqlErr := db.Query(query, year, month)
+	rows, sqlErr := db.conn.Query(query, year, month)
 	if sqlErr != nil {
 		log.Fatal("Problem executing query ...", sqlErr)
 	}
@@ -230,16 +205,14 @@ func Progress(year int, month int) ([]models.Progress, error) {
 	return resp, nil
 }
 
-func Activity(id int) (models.Progress, error) {
-	var prog models.Progress
-
+func (db *Dao) Activity(id int) (models.Progress, error) {
 	query := `
 		SELECT progid, allprogress.exerciseid, exercise, muscle, mydate, weight, rep1, rep2
 		FROM app.allprogress
 		WHERE progid = $1
 	`
 
-	rows, sqlErr := db.Query(query, id)
+	rows, sqlErr := db.conn.Query(query, id)
 	if sqlErr != nil {
 		log.Fatal("Problem executing query ...", sqlErr)
 	}
@@ -254,6 +227,12 @@ func Activity(id int) (models.Progress, error) {
 	if !rows.Next() {
 		log.Fatal("No rows returned")
 	}
+
+	return getProgress(rows), nil
+}
+
+func getProgress(rows *sql.Rows) models.Progress {
+	var prog models.Progress
 
 	var weight sql.NullFloat64
 	var rep1 sql.NullInt16
@@ -284,5 +263,20 @@ func Activity(id int) (models.Progress, error) {
 		prog.Rep2 = &r
 	}
 
-	return prog, nil
+	return prog
+}
+
+func (db *Dao) NewActivity(act models.NewActivity) (int64, error) {
+	query := `
+		INSERT INTO app.progress (exercise, mydate, weight, rep1, rep2)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+
+	res, err := db.conn.Exec(query, act.ExerciseID, act.MyDate, act.Weight, act.Rep1, act.Rep2)
+	if err != nil {
+		log.Println("Error inserting activity: ", err)
+		return 0, err
+	}
+
+	return res.LastInsertId()
 }

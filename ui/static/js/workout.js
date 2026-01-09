@@ -180,7 +180,7 @@ export default class Workout {
 	save = () => {
 		const body = this.#getFormValues();
 
-		fetch('activity', {
+		fetch('api/v1/activity', {
 			method: 'POST',
 			body: JSON.stringify(body),
 			headers: this.headers

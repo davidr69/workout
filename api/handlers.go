@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -11,6 +10,8 @@ import (
 	"workout.lavacro.net/database"
 	"workout.lavacro.net/models"
 )
+
+var db *database.Dao
 
 func writeResponse(w http.ResponseWriter, data models.Envelope) {
 	js, jsErr := json.Marshal(data)
@@ -28,19 +29,22 @@ func writeResponse(w http.ResponseWriter, data models.Envelope) {
 	}
 }
 
-func readBody(r *http.Request, obj any) (any, error) {
-	dec := json.NewDecoder(r.Body)
+func readBody(r *http.Request, obj any) error {
+	body, err := io.ReadAll(r.Body)
+	defer func() {
+		err = r.Body.Close()
+	}()
 
-	if err := dec.Decode(obj); err != nil {
-		return nil, err
+	if err != nil {
+		return err
 	}
 
-	err := dec.Decode(&struct{}{})
-	if err != io.EOF {
-		return nil, errors.New("trailing garbage after JSON object")
+	println(string(body))
+	err = json.Unmarshal(body, obj)
+	if err != nil {
+		return err
 	}
-
-	return dec, nil
+	return nil
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +53,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 
 func allProgress(w http.ResponseWriter, r *http.Request) {
 	var resp []models.Progress
-	resp, dberr := database.AllProgress()
+	resp, dberr := db.AllProgress()
 
 	if dberr != nil {
 		log.Fatal("Problem getting data from database ...", dberr)
@@ -60,7 +64,7 @@ func allProgress(w http.ResponseWriter, r *http.Request) {
 
 func exercises(w http.ResponseWriter, r *http.Request) {
 	var resp []models.Exercises
-	resp, dberr := database.Exercises()
+	resp, dberr := db.Exercises()
 
 	if dberr != nil {
 		log.Fatal("Problem getting data from database ...", dberr)
@@ -70,14 +74,14 @@ func exercises(w http.ResponseWriter, r *http.Request) {
 }
 
 func months(w http.ResponseWriter, r *http.Request) {
-	resp, dberr := database.YearMonths()
+	resp, dberr := db.YearMonths()
 	if dberr != nil {
 		log.Fatal("Problem getting data from database ...", dberr)
 	}
 	writeResponse(w, models.Envelope{"dates": resp})
 }
 
-func progress(w http.ResponseWriter, r *http.Request) {
+func getProgress(w http.ResponseWriter, r *http.Request) {
 	year := r.URL.Query().Get("year")
 	month := r.URL.Query().Get("month")
 
@@ -98,7 +102,7 @@ func progress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, dberr := database.Progress(yearInt, monthInt)
+	resp, dberr := db.Progress(yearInt, monthInt)
 	if dberr != nil {
 		log.Fatal("Problem getting data from database ...", dberr)
 	}
@@ -106,7 +110,7 @@ func progress(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, models.Envelope{"progress": resp})
 }
 
-func activity(w http.ResponseWriter, r *http.Request) {
+func getActivity(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 
 	if id == "" {
@@ -121,11 +125,28 @@ func activity(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var resp models.Progress
-	resp, dberr := database.Activity(idInt)
+	resp, dberr := db.Activity(idInt)
 
 	if dberr != nil {
 		log.Fatal("Problem getting data from database ...", dberr)
 	}
 
 	writeResponse(w, models.Envelope{"activity": resp})
+}
+
+func newActivity(w http.ResponseWriter, r *http.Request) {
+	var act models.NewActivity
+	err := readBody(r, &act)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	id, dberr := db.NewActivity(act)
+	if dberr != nil {
+		http.Error(w, dberr.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(w, models.Envelope{"id": id})
 }

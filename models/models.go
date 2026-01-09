@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Envelope map[string]any
 
 type Progress struct {
@@ -23,4 +25,12 @@ type Exercise struct {
 	Id           *int    `json:"id"`
 	Muscle       *string `json:"muscle"`
 	ExerciseName *string `json:"exercise_name"`
+}
+
+type NewActivity struct {
+	ExerciseID *int       `json:"exercise"`
+	MyDate     *time.Time `json:"mydate"`
+	Weight     *float32   `json:"weight"`
+	Rep1       *int       `json:"rep1"`
+	Rep2       *int       `json:"rep2"`
 }
