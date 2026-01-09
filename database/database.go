@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -269,13 +270,21 @@ func getProgress(rows *sql.Rows) models.Progress {
 func (db *Dao) NewActivity(act models.Activity) (int64, error) {
 	query := `
 		INSERT INTO app.progress (exercise, mydate, weight, rep1, rep2)
-		VALUES ($1, $2, $3, $4, $5)
+		SELECT $1, $2, $3, $4, $5
+		WHERE NOT EXISTS (
+			SELECT 1 FROM app.progress 
+			WHERE exercise = $1 AND mydate = $2
+		)
 		RETURNING id
 	`
 
 	var newID int64
 
 	err := db.conn.QueryRow(query, act.ExerciseID, act.MyDate, act.Weight, act.Rep1, act.Rep2).Scan(&newID)
+	if errors.Is(err, sql.ErrNoRows) {
+		// Record already exists, handle as needed
+		return 0, fmt.Errorf("activity already exists for this exercise and date")
+	}
 	if err != nil {
 		log.Println("Error inserting activity: ", err)
 		return 0, err

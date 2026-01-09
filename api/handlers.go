@@ -144,11 +144,11 @@ func newActivity(w http.ResponseWriter, r *http.Request) {
 
 	id, dberr := db.NewActivity(act)
 	if dberr != nil {
-		http.Error(w, dberr.Error(), http.StatusInternalServerError)
-		return
+		w.WriteHeader(http.StatusBadRequest)
+		writeResponse(w, models.Envelope{"error": dberr.Error()})
+	} else {
+		writeResponse(w, models.Envelope{"id": id})
 	}
-
-	writeResponse(w, models.Envelope{"id": id})
 }
 
 func updateActivity(w http.ResponseWriter, r *http.Request) {

@@ -1,7 +1,7 @@
 POST http://localhost:8080/api/v1/progress
 Content-Type: application/json
 
-{"exercise":93,"mydate":"2026-01-01T05:00:00.000Z","weight":73.5,"rep1":10,"rep2": null}
+{"exercise":42,"mydate":"2026-01-01T05:00:00.000Z","weight":45,"rep1":7,"rep2":null}
 ###
 PUT http://localhost:8080/api/v1/progress
 Content-Type: application/json
