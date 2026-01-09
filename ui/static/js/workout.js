@@ -186,8 +186,13 @@ export default class Workout {
 			headers: this.headers
 		}).then(response => {
 			response.json().then(data => {
-				console.log(data);
-				globalThis.location.reload();
+				if(data['error']) {
+					console.error(data);
+					alert(data['error']);
+				} else {
+					console.log(data);
+					globalThis.location.reload();
+				}
 			})
 		}).catch(error => {
 			console.log(error);

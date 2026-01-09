@@ -108,7 +108,7 @@ export default class Render {
 			let tr = document.createElement('tr');
 			let td = document.createElement('td');
 			td.setAttribute('class', 'muscle');
-			let textNode = document.createTextNode(section['description']);
+			let textNode = document.createTextNode(section['muscle']);
 			td.appendChild(textNode);
 			tr.appendChild(td);
 			th.appendChild(tr);
