@@ -1,0 +1,5 @@
+POST http://localhost:8080/api/v1/activity
+Content-Type: application/json
+
+{"exercise":93,"mydate":"2026-01-01T05:00:00.000Z","weight":73.5,"rep1":10,"rep2": null}
+###

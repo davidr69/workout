@@ -150,3 +150,32 @@ func newActivity(w http.ResponseWriter, r *http.Request) {
 
 	writeResponse(w, models.Envelope{"id": id})
 }
+
+func deleteActivity(w http.ResponseWriter, r *http.Request) {
+	log.Println("deleteActivity")
+	id := r.URL.Query().Get("id")
+
+	log.Println("id = ", id)
+	if id == "" {
+		log.Println("id is empty")
+		http.Error(w, "id is required", http.StatusBadRequest)
+		return
+	}
+
+	numId, err := strconv.Atoi(id)
+	if err != nil {
+		log.Println("id is not an integer")
+		http.Error(w, "id parameter must be an integer", http.StatusBadRequest)
+		return
+	}
+
+	rows, err := db.DeleteActivity(numId)
+	if err != nil {
+		log.Println("error deleting activity")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("deleted rows = ", rows)
+	writeResponse(w, models.Envelope{"deleted rows": rows})
+}

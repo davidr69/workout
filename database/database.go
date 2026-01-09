@@ -270,13 +270,32 @@ func (db *Dao) NewActivity(act models.NewActivity) (int64, error) {
 	query := `
 		INSERT INTO app.progress (exercise, mydate, weight, rep1, rep2)
 		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id
 	`
 
-	res, err := db.conn.Exec(query, act.ExerciseID, act.MyDate, act.Weight, act.Rep1, act.Rep2)
+	var newID int64
+
+	err := db.conn.QueryRow(query, act.ExerciseID, act.MyDate, act.Weight, act.Rep1, act.Rep2).Scan(&newID)
 	if err != nil {
 		log.Println("Error inserting activity: ", err)
 		return 0, err
 	}
 
-	return res.LastInsertId()
+	return newID, nil
+}
+
+func (db *Dao) DeleteActivity(id int) (int64, error) {
+	query := "DELETE FROM app.progress WHERE id = $1"
+
+	res, err := db.conn.Exec(query, id)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

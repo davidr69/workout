@@ -15,7 +15,8 @@ func Routes(dao *database.Dao) *http.ServeMux {
 	mux.HandleFunc("GET /api/v1/months", months)
 	mux.HandleFunc("GET /api/v1/progress", getProgress)
 	mux.HandleFunc("GET /api/v1/activity", getActivity)
-	mux.HandleFunc("POST /api/v1/activity", newActivity)
+	mux.HandleFunc("POST /api/v1/progress", newActivity)
+	mux.HandleFunc("DELETE /api/v1/progress", deleteActivity)
 	/*
 		mux.HandleFunc("GET /api/v1/stats/{when}", nil)
 		mux.HandleFunc("PUT /api/v1/activity", nil)

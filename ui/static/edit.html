@@ -18,7 +18,7 @@
 
   		function confirm_del() {
             if(confirm("Do you really want to remove this")) {
-                fetch(`api/v1/activity?id=${id}`, {
+                fetch(`api/v1/progress?id=${id}`, {
                     method: 'DELETE',
                     headers: headers
                 }).then(response => {
