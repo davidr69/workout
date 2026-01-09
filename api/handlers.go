@@ -135,7 +135,7 @@ func getActivity(w http.ResponseWriter, r *http.Request) {
 }
 
 func newActivity(w http.ResponseWriter, r *http.Request) {
-	var act models.NewActivity
+	var act models.Activity
 	err := readBody(r, &act)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -149,6 +149,23 @@ func newActivity(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse(w, models.Envelope{"id": id})
+}
+
+func updateActivity(w http.ResponseWriter, r *http.Request) {
+	var act models.Activity
+	err := readBody(r, &act)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	count, uerr := db.UpdateActivity(act)
+	if uerr != nil {
+		http.Error(w, uerr.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(w, models.Envelope{"updated": count})
 }
 
 func deleteActivity(w http.ResponseWriter, r *http.Request) {

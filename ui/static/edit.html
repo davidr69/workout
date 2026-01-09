@@ -39,13 +39,13 @@
 			const rep2 = document.getElementById('rep2').value.trim();
 
 			const body =  {
-				id: id,
+				id: Number(id),
 				weight: weight === '' ? null : Number(weight),
 				rep1: rep1 === '' ? null : Number(rep1),
 				rep2: rep2 === '' ? null : Number(rep2)
 			};
 
-			fetch('api/v1/activity', {
+			fetch('api/v1/progress', {
 				method: 'PUT',
 				body: JSON.stringify(body),
 				headers: headers

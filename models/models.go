@@ -27,7 +27,8 @@ type Exercise struct {
 	ExerciseName *string `json:"exercise_name"`
 }
 
-type NewActivity struct {
+type Activity struct {
+	ProgressID *int       `json:"id"` // only used for update
 	ExerciseID *int       `json:"exercise"`
 	MyDate     *time.Time `json:"mydate"`
 	Weight     *float32   `json:"weight"`

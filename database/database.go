@@ -266,7 +266,7 @@ func getProgress(rows *sql.Rows) models.Progress {
 	return prog
 }
 
-func (db *Dao) NewActivity(act models.NewActivity) (int64, error) {
+func (db *Dao) NewActivity(act models.Activity) (int64, error) {
 	query := `
 		INSERT INTO app.progress (exercise, mydate, weight, rep1, rep2)
 		VALUES ($1, $2, $3, $4, $5)
@@ -282,6 +282,24 @@ func (db *Dao) NewActivity(act models.NewActivity) (int64, error) {
 	}
 
 	return newID, nil
+}
+
+func (db *Dao) UpdateActivity(act models.Activity) (int64, error) {
+	// unlike POST, the PUT can only update weight, rep1, and rep2, and we already know the id
+	query := `
+		UPDATE app.progress SET weight = $2, rep1 = $3, rep2 = $4
+		WHERE id = $1
+	`
+
+	res, err := db.conn.Exec(query, act.ProgressID, act.Weight, act.Rep1, act.Rep2)
+	if err != nil {
+		log.Println("Error inserting activity: ", err)
+		return 0, err
+	}
+
+	var count int64
+	count, _ = res.RowsAffected()
+	return count, nil
 }
 
 func (db *Dao) DeleteActivity(id int) (int64, error) {
