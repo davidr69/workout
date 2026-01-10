@@ -47,6 +47,8 @@ a popup for editing existing entries:
 
 ## Roadmap
 
+- [ ] Asynchronous logging
+- [x] Disable directory listing
 - [ ] Mobile-friendly UI (in-place editing)
 - [ ] Add tests
 - [ ] Add CI/CD
