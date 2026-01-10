@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -16,6 +16,7 @@ var db *database.Dao
 func writeResponse(w http.ResponseWriter, data models.Envelope) {
 	js, jsErr := json.Marshal(data)
 	if jsErr != nil {
+		slog.Error("Error marshalling JSON", "error", jsErr)
 		http.Error(w, jsErr.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -25,7 +26,18 @@ func writeResponse(w http.ResponseWriter, data models.Envelope) {
 	_, werr := w.Write(js)
 
 	if werr != nil {
+		slog.Error("Error writing response", "error", werr)
 		http.Error(w, werr.Error(), http.StatusInternalServerError)
+	}
+}
+
+func errorWriter(w http.ResponseWriter, err string) {
+	slog.Error("Error", "message", err)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+	_, werr := w.Write([]byte(`{"error": "` + err + `"}` + "\n"))
+	if werr != nil {
+		slog.Error("Error writing response", "error", werr)
 	}
 }
 
@@ -39,7 +51,7 @@ func readBody(r *http.Request, obj any) error {
 		return err
 	}
 
-	println(string(body))
+	slog.Info("Request body", "body", string(body))
 	err = json.Unmarshal(body, obj)
 	if err != nil {
 		return err
@@ -52,75 +64,88 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func allProgress(w http.ResponseWriter, r *http.Request) {
+	slog.Info("allProgress")
 	var resp []models.Progress
 	resp, dberr := db.AllProgress()
 
 	if dberr != nil {
-		log.Fatal("Problem getting data from database ...", dberr)
+		slog.Error("Error getting progress ...", dberr)
+		errorWriter(w, "database error")
+		return
 	}
 
 	writeResponse(w, models.Envelope{"progress": resp})
 }
 
 func exercises(w http.ResponseWriter, r *http.Request) {
+	slog.Info("exercises")
 	var resp []models.Exercises
 	resp, dberr := db.Exercises()
 
 	if dberr != nil {
-		log.Fatal("Problem getting data from database ...", dberr)
+		slog.Error("exercises:", "error", dberr.Error())
+		errorWriter(w, "database error")
+		return
 	}
 
 	writeResponse(w, models.Envelope{"exercises": resp})
 }
 
 func months(w http.ResponseWriter, r *http.Request) {
+	slog.Info("months")
 	resp, dberr := db.YearMonths()
 	if dberr != nil {
-		log.Fatal("Problem getting data from database ...", dberr)
+		slog.Error("months:", "error", dberr.Error())
+		errorWriter(w, "database error")
+		return
 	}
 	writeResponse(w, models.Envelope{"dates": resp})
 }
 
 func getProgress(w http.ResponseWriter, r *http.Request) {
+	slog.Info("getProgress")
 	year := r.URL.Query().Get("year")
 	month := r.URL.Query().Get("month")
 
 	if year == "" || month == "" {
-		http.Error(w, "year and month parameters are required", http.StatusBadRequest)
+		errorWriter(w, "year and month parameters are required")
 		return
 	}
 
 	yearInt, err := strconv.Atoi(year)
 	if err != nil {
-		http.Error(w, "year parameter must be an integer", http.StatusBadRequest)
+		errorWriter(w, "year parameter must be an integer")
 		return
 	}
 
 	monthInt, err := strconv.Atoi(month)
 	if err != nil {
-		http.Error(w, "month parameter must be an integer", http.StatusBadRequest)
+		errorWriter(w, "month parameter must be an integer")
 		return
 	}
 
+	slog.Info("getProgress:", "year", yearInt, "month", monthInt)
 	resp, dberr := db.Progress(yearInt, monthInt)
 	if dberr != nil {
-		log.Fatal("Problem getting data from database ...", dberr)
+		slog.Error("Error getting progress ...", dberr)
+		errorWriter(w, "database error")
 	}
 
 	writeResponse(w, models.Envelope{"progress": resp})
 }
 
 func getActivity(w http.ResponseWriter, r *http.Request) {
+	slog.Info("getActivity")
 	id := r.URL.Query().Get("id")
 
 	if id == "" {
-		http.Error(w, "id is required", http.StatusBadRequest)
+		errorWriter(w, "id parameter is required")
 		return
 	}
 
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
-		http.Error(w, "id parameter must be an integer", http.StatusBadRequest)
+		errorWriter(w, "id parameter must be an integer")
 		return
 	}
 
@@ -128,39 +153,45 @@ func getActivity(w http.ResponseWriter, r *http.Request) {
 	resp, dberr := db.Activity(idInt)
 
 	if dberr != nil {
-		log.Fatal("Problem getting data from database ...", dberr)
+		slog.Error("Error getting activity ...", dberr)
+		errorWriter(w, "database error")
+		return
 	}
 
 	writeResponse(w, models.Envelope{"activity": resp})
 }
 
 func newActivity(w http.ResponseWriter, r *http.Request) {
+	slog.Info("newActivity")
 	var act models.Activity
 	err := readBody(r, &act)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		errorWriter(w, err.Error())
 		return
 	}
 
 	id, dberr := db.NewActivity(act)
 	if dberr != nil {
-		writeResponse(w, models.Envelope{"error": dberr.Error()})
+		slog.Error("Error inserting activity ...", dberr)
+		errorWriter(w, "database error")
 	} else {
 		writeResponse(w, models.Envelope{"id": id})
 	}
 }
 
 func updateActivity(w http.ResponseWriter, r *http.Request) {
+	slog.Info("updateActivity")
 	var act models.Activity
 	err := readBody(r, &act)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		errorWriter(w, err.Error())
 		return
 	}
 
 	count, uerr := db.UpdateActivity(act)
 	if uerr != nil {
-		http.Error(w, uerr.Error(), http.StatusInternalServerError)
+		slog.Error("Error updating activity ...", uerr)
+		errorWriter(w, "database error")
 		return
 	}
 
@@ -168,30 +199,28 @@ func updateActivity(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteActivity(w http.ResponseWriter, r *http.Request) {
-	log.Println("deleteActivity")
+	slog.Info("deleteActivity")
 	id := r.URL.Query().Get("id")
 
-	log.Println("id = ", id)
+	slog.Info("id = ", id)
 	if id == "" {
-		log.Println("id is empty")
-		http.Error(w, "id is required", http.StatusBadRequest)
+		errorWriter(w, "id parameter is required")
 		return
 	}
 
 	numId, err := strconv.Atoi(id)
 	if err != nil {
-		log.Println("id is not an integer")
-		http.Error(w, "id parameter must be an integer", http.StatusBadRequest)
+		errorWriter(w, err.Error())
 		return
 	}
 
 	rows, err := db.DeleteActivity(numId)
 	if err != nil {
-		log.Println("error deleting activity")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Error("Error deleting activity ...", err)
+		errorWriter(w, "database error")
 		return
 	}
 
-	log.Println("deleted rows = ", rows)
+	slog.Info("deleted rows = ", rows)
 	writeResponse(w, models.Envelope{"deleted rows": rows})
 }

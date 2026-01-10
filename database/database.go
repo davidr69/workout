@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	_ "github.com/lib/pq" // go get github.com/lib/pq
@@ -22,7 +22,7 @@ func (db *Dao) Init() {
 	var err error
 	db.conn, err = sql.Open("postgres", uri)
 	if err != nil {
-		log.Fatal("Error connecting to database: ", err)
+		slog.Error("init", "error", err.Error())
 	}
 }
 
@@ -38,13 +38,13 @@ func (db *Dao) AllProgress() ([]models.Progress, error) {
 
 	rows, sqlErr := db.conn.Query(query)
 	if sqlErr != nil {
-		log.Fatal("Problem executing query ...", sqlErr)
+		return allProg, sqlErr
 	}
 
 	defer func() {
 		err := rows.Close()
 		if err != nil {
-			log.Fatal("Problem closing 'rows' resource")
+			slog.Error("AllProgress", "error", "Problem closing 'rows' resource")
 		}
 	}()
 
@@ -69,13 +69,13 @@ func (db *Dao) Exercises() ([]models.Exercises, error) {
 	`
 	rows, err := db.conn.Query(query)
 	if err != nil {
-		log.Fatal("Problem executing query ...", err)
+		return exercises, err
 	}
 
 	defer func() {
 		err := rows.Close()
 		if err != nil {
-			log.Fatal("Problem closing 'rows' resource")
+			slog.Error("AllProgress", "error", "Problem closing 'rows' resource")
 		}
 	}()
 
@@ -88,7 +88,7 @@ func (db *Dao) Exercises() ([]models.Exercises, error) {
 			&e.Muscle,
 			&e.Id,
 			&e.ExerciseName); err != nil {
-			log.Fatal("Problem scanning row ...", err)
+			return exercises, err
 		}
 
 		if muscle == "" || muscle != *e.Muscle {
@@ -121,20 +121,20 @@ func (db *Dao) YearMonths() ([]string, error) {
 	`
 	rows, err := db.conn.Query(query)
 	if err != nil {
-		log.Fatal("Problem executing query ...", err)
+		return months, err
 	}
 
 	defer func() {
 		err := rows.Close()
 		if err != nil {
-			log.Fatal("Problem closing 'rows' resource")
+			slog.Error("AllProgress", "error", "Problem closing 'rows' resource")
 		}
 	}()
 
 	for rows.Next() {
 		var yrmon string
 		if err := rows.Scan(&yrmon); err != nil {
-			log.Fatal("Problem scanning row ...", err)
+			return months, err
 		}
 		months = append(months, yrmon)
 	}
@@ -158,13 +158,13 @@ func (db *Dao) Progress(year int, month int) ([]models.Progress, error) {
 
 	rows, sqlErr := db.conn.Query(query, year, month)
 	if sqlErr != nil {
-		log.Fatal("Problem executing query ...", sqlErr)
+		return resp, sqlErr
 	}
 
 	defer func() {
 		err := rows.Close()
 		if err != nil {
-			log.Fatal("Problem closing 'rows' resource")
+			slog.Error("AllProgress", "error", "Problem closing 'rows' resource")
 		}
 	}()
 
@@ -184,7 +184,7 @@ func (db *Dao) Progress(year int, month int) ([]models.Progress, error) {
 			&rep2,
 			&p.ProgressId,
 		); err != nil {
-			log.Fatal("Problem scanning row ...", err)
+			return resp, err
 		}
 
 		if weight.Valid {
@@ -215,18 +215,18 @@ func (db *Dao) Activity(id int) (models.Progress, error) {
 
 	rows, sqlErr := db.conn.Query(query, id)
 	if sqlErr != nil {
-		log.Fatal("Problem executing query ...", sqlErr)
+		return models.Progress{}, sqlErr
 	}
 
 	defer func() {
 		err := rows.Close()
 		if err != nil {
-			log.Fatal("Problem closing 'rows' resource")
+			slog.Error("AllProgress", "error", "Problem closing 'rows' resource")
 		}
 	}()
 
 	if !rows.Next() {
-		log.Fatal("No rows returned")
+		return models.Progress{}, fmt.Errorf("no activity found for id %d", id)
 	}
 
 	return getProgress(rows), nil
@@ -248,7 +248,8 @@ func getProgress(rows *sql.Rows) models.Progress {
 		&weight,
 		&rep1,
 		&rep2); err != nil {
-		log.Fatal("Problem scanning row ...", err)
+		slog.Error("getProgress", "error", err.Error())
+		return prog
 	}
 
 	if weight.Valid {
@@ -286,7 +287,6 @@ func (db *Dao) NewActivity(act models.Activity) (int64, error) {
 		return 0, fmt.Errorf("activity already exists for this exercise and date")
 	}
 	if err != nil {
-		log.Println("Error inserting activity: ", err)
 		return 0, err
 	}
 
@@ -302,7 +302,6 @@ func (db *Dao) UpdateActivity(act models.Activity) (int64, error) {
 
 	res, err := db.conn.Exec(query, act.ProgressID, act.Weight, act.Rep1, act.Rep2)
 	if err != nil {
-		log.Println("Error inserting activity: ", err)
 		return 0, err
 	}
 

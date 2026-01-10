@@ -1,5 +1,5 @@
 # Stage 1: Build the binary
-ARG GO_VERSION=1.22.2
+ARG GO_VERSION=1.25.5
 FROM docker.io/golang:${GO_VERSION}-alpine AS builder
 
 # Install git/ca-certificates if needed for private modules or HTTPS

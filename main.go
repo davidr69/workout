@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"workout.lavacro.net/api"
@@ -14,8 +16,22 @@ type config struct {
 	port int
 }
 
+const banner = `
+                   _                      
+                  | |                 _   
+ _ _ _  ___   ____| |  _ ___  _   _ _| |_ 
+| | | |/ _ \ / ___) |_/ ) _ \| | | (_   _)
+| | | | |_| | |   |  _ ( |_| | |_| | | |_ 
+ \___/ \___/|_|   |_| \_)___/|____/   \__)
+
+`
+
 func main() {
-	fmt.Println("Hello, World!")
+	fmt.Print(banner)
+
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	})))
 
 	db := &database.Dao{}
 	db.Init()

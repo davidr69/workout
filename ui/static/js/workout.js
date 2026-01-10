@@ -113,6 +113,10 @@ export default class Workout {
 				}
 			*/
 			response.json().then(data => {
+				if(data['error']) {
+					alert(data['error']);
+					return;
+				}
 				// draw the left side muscle/category list
 				this.render.drawMusclesAndExercises(data);
 				this.#getMonths();
