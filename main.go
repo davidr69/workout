@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"workout.lavacro.net/api"
@@ -42,7 +43,7 @@ func main() {
 
 	mux := api.Routes(db)
 
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	fileServer := http.FileServer(noDirFileSystem{http.Dir("./ui/static/")})
 	mux.Handle("/", http.StripPrefix("", fileServer))
 
 	server := &http.Server{
@@ -55,4 +56,34 @@ func main() {
 
 	err := server.ListenAndServe()
 	fmt.Println(err)
+}
+
+type noDirFileSystem struct {
+	fs http.FileSystem
+}
+
+func (ndfs noDirFileSystem) Open(path string) (http.File, error) {
+	f, err := ndfs.fs.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	if s.IsDir() {
+		// Check if index.html exists
+		index := filepath.Join(path, "index.html")
+		if _, err := ndfs.fs.Open(index); err != nil {
+			closeErr := f.Close()
+			if closeErr != nil {
+				return nil, closeErr
+			}
+			return nil, os.ErrNotExist
+		}
+	}
+
+	return f, nil
 }
