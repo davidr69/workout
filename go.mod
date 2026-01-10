@@ -1,5 +1,5 @@
 module workout.lavacro.net
 
-go 1.25.5
+go 1.22.2
 
 require github.com/lib/pq v1.10.9

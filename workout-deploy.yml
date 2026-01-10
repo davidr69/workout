@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workout-app
+  namespace: workout
+  labels:
+    app: workout
+    tier: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: web
+  template:
+    metadata:
+      labels:
+        app: workout
+        tier: web
+    spec:
+      containers:
+      - name: gym
+        image: "registry:5000/workout:1.0.0"
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - secretRef:
+           name: database-secrets
+        env:
+        - name: profile
+          value: prod
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m" # 1/2 CPU
+        readinessProbe:
+          httpGet:
+            path: /api/v1/healthcheck
+            port: 8080
+          timeoutSeconds: 60
+        #          initialDelaySeconds: 60
+        livenessProbe:
+          httpGet:
+            path: /api/v1/healthcheck
+            port: 8080
+          timeoutSeconds: 3
+          initialDelaySeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workout-service
+  namespace: workout
+spec:
+  selector:
+    app: workout
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: workout-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: workout.cloud.lavacro.net
+    http:
+      paths:
+      - path: "/"
+        pathType: Prefix
+        backend:
+          service:
+            name: workout-service
+            port:
+              number: 80
